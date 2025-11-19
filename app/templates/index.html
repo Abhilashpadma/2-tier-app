@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2-Tier Key-Value Store</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            flex: 0 0 auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .data-section {
+            margin-top: 30px;
+        }
+        
+        .data-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .data-grid {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .data-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .data-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .data-content {
+            flex: 1;
+        }
+        
+        .data-key {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        
+        .data-value {
+            color: #333;
+            font-size: 1em;
+        }
+        
+        .data-timestamp {
+            color: #666;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ 2-Tier Key-Value Store</h1>
+        <p class="subtitle">Demonstrating Pod Interconnection in Kubernetes</p>
+        
+        <div id="status" class="status">Checking connection...</div>
+        
+        <div class="form-section">
+            <div id="message"></div>
+            
+            <div class="form-group">
+                <label for="key">Key:</label>
+                <input type="text" id="key" placeholder="Enter a unique key (e.g., username, config_name)">
+            </div>
+            
+            <div class="form-group">
+                <label for="value">Value:</label>
+                <input type="text" id="value" placeholder="Enter the value to store">
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-primary" onclick="storeValue()">💾 Store</button>
+                <button class="btn-secondary" onclick="retrieveValue()">🔍 Retrieve</button>
+                <button class="btn-secondary" onclick="loadAll()">📋 Load All</button>
+            </div>
+        </div>
+        
+        <div class="data-section">
+            <h2>Stored Data</h2>
+            <div id="dataContainer" class="data-grid">
+                <div class="empty-state">No data stored yet. Add some key-value pairs!</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Check health status on load
+        checkHealth();
+        loadAll();
+        
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                const statusDiv = document.getElementById('status');
+                
+                if (data.status === 'healthy') {
+                    statusDiv.className = 'status connected';
+                    statusDiv.textContent = '✅ Connected to Database (Pod-to-Pod Communication Active)';
+                } else {
+                    statusDiv.className = 'status disconnected';
+                    statusDiv.textContent = '❌ Database Connection Failed';
+                }
+            } catch (error) {
+                const statusDiv = document.getElementById('status');
+                statusDiv.className = 'status disconnected';
+                statusDiv.textContent = '❌ Unable to reach backend';
+            }
+        }
+        
+        function showMessage(text, isError = false) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = `message ${isError ? 'error' : 'success'}`;
+            messageDiv.textContent = text;
+            setTimeout(() => {
+                messageDiv.className = 'message';
+                messageDiv.textContent = '';
+            }, 3000);
+        }
+        
+        async function storeValue() {
+            const key = document.getElementById('key').value.trim();
+            const value = document.getElementById('value').value.trim();
+            
+            if (!key || !value) {
+                showMessage('Please enter both key and value', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/store', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ key, value })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(`✅ Stored: ${key} = ${value}`);
+                    document.getElementById('key').value = '';
+                    document.getElementById('value').value = '';
+                    loadAll();
+                } else {
+                    showMessage(data.error || 'Error storing value', true);
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, true);
+            }
+        }
+        
+        async function retrieveValue() {
+            const key = document.getElementById('key').value.trim();
+            
+            if (!key) {
+                showMessage('Please enter a key to retrieve', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/retrieve/${encodeURIComponent(key)}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('value').value = data.value;
+                    showMessage(`✅ Retrieved: ${key} = ${data.value}`);
+                } else {
+                    showMessage(data.error || 'Key not found', true);
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, true);
+            }
+        }
+        
+        async function loadAll() {
+            try {
+                const response = await fetch('/api/all');
+                const data = await response.json();
+                const container = document.getElementById('dataContainer');
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No data stored yet. Add some key-value pairs!</div>';
+                } else {
+                    container.innerHTML = data.map(item => `
+                        <div class="data-item">
+                            <div class="data-content">
+                                <div class="data-key">${escapeHtml(item.key_name)}</div>
+                                <div class="data-value">${escapeHtml(item.value)}</div>
+                                <div class="data-timestamp">Created: ${new Date(item.created_at).toLocaleString()}</div>
+                            </div>
+                            <button class="btn-danger" onclick="deleteValue('${escapeHtml(item.key_name)}')">🗑️ Delete</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+        
+        async function deleteValue(key) {
+            if (!confirm(`Delete key "${key}"?`)) return;
+            
+            try {
+                const response = await fetch(`/api/delete/${encodeURIComponent(key)}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(`🗑️ Deleted: ${key}`);
+                    loadAll();
+                } else {
+                    showMessage(data.error || 'Error deleting value', true);
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, true);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Allow Enter key to store values
+        document.getElementById('value').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                storeValue();
+            }
+        });
+    </script>
+</body>
+</html>
